@@ -12,10 +12,13 @@ if not OPENAI_API_KEY:
     st.error("Please set your OPENAI_API_KEY in your environment or .env file.")
     st.stop()
 
+# Set the API key globally for OpenAI
+openai.api_key = OPENAI_API_KEY
+
 # Set up the Streamlit page with a custom title and icon
 st.set_page_config(page_title="Arhat: The Path to Enlightenment", page_icon="🕉️", layout="wide")
 
-# Custom CSS for a philosophical look: soft background, elegant font, and styled buttons
+# Custom CSS for a serene, philosophical look
 st.markdown(
     """
     <style>
@@ -54,8 +57,7 @@ def get_openai_response(prompt):
     try:
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
-            messages=prompt,
-            api_key=OPENAI_API_KEY
+            messages=prompt
         )
         return response["choices"][0]["message"]["content"].strip()
     except Exception as e:
@@ -66,20 +68,20 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# User input for the chatbot
+# Get user input for the chatbot
 user_input = st.chat_input("Share your thoughts or ask for guidance...")
 if user_input:
-    # Add user's message to the conversation
+    # Append the user's message
     st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
         st.markdown(user_input)
     
-    # Prepare the conversation for the API call
+    # Prepare conversation history and get the bot's response
     messages = [{"role": msg["role"], "content": msg["content"]} for msg in st.session_state.messages]
-    # Get the chatbot's response from OpenAI
     bot_response = get_openai_response(messages)
     
     # Append and display the assistant's response
     st.session_state.messages.append({"role": "assistant", "content": bot_response})
     with st.chat_message("assistant"):
         st.markdown(bot_response)
+
