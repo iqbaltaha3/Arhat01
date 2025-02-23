@@ -1,12 +1,13 @@
 import streamlit as st
 import os
+import time
 import requests
 from dotenv import load_dotenv
 
 # Set the page configuration as the very first Streamlit command
 st.set_page_config(page_title="Arhat: The Path to Enlightenment", page_icon="🕉️", layout="wide")
 
-# Load environment variables from .env (or rely on Streamlit Cloud secrets)
+# Load environment variables (from .env locally or via Streamlit Cloud secrets)
 load_dotenv()
 
 # Retrieve your API key from the environment
@@ -42,7 +43,7 @@ st.write(
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Function to get a response from OpenAI using direct HTTP requests
+# Function to get a response from OpenAI using direct HTTP requests with retry logic
 def get_openai_response(prompt):
     url = "https://api.openai.com/v1/chat/completions"
     headers = {
@@ -54,13 +55,22 @@ def get_openai_response(prompt):
         "messages": prompt,
         "temperature": 0.7
     }
-    try:
+    retries = 3      # Number of retries
+    backoff = 2      # Initial wait time in seconds
+    for attempt in range(retries):
         response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()
-        result = response.json()
-        return result["choices"][0]["message"]["content"].strip()
-    except Exception as e:
-        return f"Error: {str(e)}"
+        if response.status_code == 429:
+            st.warning("Rate limit exceeded, waiting before retrying...")
+            time.sleep(backoff)
+            backoff *= 2  # Exponential backoff
+            continue
+        try:
+            response.raise_for_status()  # Raise an error for other bad status codes
+            result = response.json()
+            return result["choices"][0]["message"]["content"].strip()
+        except Exception as e:
+            return f"Error: {str(e)}"
+    return "Error: Too many requests, please try again later."
 
 # Display existing chat messages
 for msg in st.session_state.messages:
@@ -75,7 +85,7 @@ if user_input:
     with st.chat_message("user"):
         st.markdown(user_input)
     
-    # Prepare conversation history and get a response
+    # Prepare conversation history and get the assistant's response
     messages = [{"role": msg["role"], "content": msg["content"]} for msg in st.session_state.messages]
     bot_response = get_openai_response(messages)
     
@@ -83,6 +93,7 @@ if user_input:
     st.session_state.messages.append({"role": "assistant", "content": bot_response})
     with st.chat_message("assistant"):
         st.markdown(bot_response)
+
 
 
 
