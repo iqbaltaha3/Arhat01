@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Get your OpenAI API key from the environment
-OPENAI_API_KEY = os.getenv(OPENAI_API_KEY)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
     st.error("Please set your OPENAI_API_KEY in your environment or .env file.")
     st.stop()
