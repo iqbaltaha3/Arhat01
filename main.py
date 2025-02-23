@@ -1,26 +1,19 @@
 import streamlit as st
-
-# Must be the first Streamlit call
-st.set_page_config(page_title="Arhat: The Path to Enlightenment", page_icon="🕉️", layout="wide")
-
-import openai
 import os
+import requests
 from dotenv import load_dotenv
 
-# Load environment variables (from .env locally or Streamlit Cloud secrets)
+# Set the page configuration as the very first Streamlit command
+st.set_page_config(page_title="Arhat: The Path to Enlightenment", page_icon="🕉️", layout="wide")
+
+# Load environment variables from .env (or rely on Streamlit Cloud secrets)
 load_dotenv()
 
-# Retrieve the API key from the environment
+# Retrieve your API key from the environment
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
     st.error("Please set your OPENAI_API_KEY in your environment or via Streamlit Cloud secrets.")
     st.stop()
-
-# Set the API key globally
-openai.api_key = OPENAI_API_KEY
-
-# (Optional) Debug: show the OpenAI library version
-st.write("OpenAI Python library version:", openai.__version__)
 
 # Custom CSS for a calm, philosophical look
 st.markdown(
@@ -36,7 +29,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# App title and description
+# App Title and Description
 st.title("Arhat: The Path to Enlightenment 🕉️")
 st.write(
     """
@@ -45,18 +38,27 @@ st.write(
     """
 )
 
-# Initialize chat history
+# Initialize chat history in session state
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Function to get a response from OpenAI's API using the new interface
+# Function to get a response from OpenAI using direct HTTP requests
 def get_openai_response(prompt):
+    url = "https://api.openai.com/v1/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {OPENAI_API_KEY}"
+    }
+    payload = {
+        "model": "gpt-3.5-turbo",
+        "messages": prompt,
+        "temperature": 0.7
+    }
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=prompt
-        )
-        return response["choices"][0]["message"]["content"].strip()
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()
+        result = response.json()
+        return result["choices"][0]["message"]["content"].strip()
     except Exception as e:
         return f"Error: {str(e)}"
 
@@ -65,19 +67,23 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# Get user input
+# Get user input for the chatbot
 user_input = st.chat_input("Share your thoughts or ask for guidance...")
 if user_input:
+    # Append user's message
     st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
         st.markdown(user_input)
     
+    # Prepare conversation history and get a response
     messages = [{"role": msg["role"], "content": msg["content"]} for msg in st.session_state.messages]
     bot_response = get_openai_response(messages)
     
+    # Append and display the assistant's response
     st.session_state.messages.append({"role": "assistant", "content": bot_response})
     with st.chat_message("assistant"):
         st.markdown(bot_response)
+
 
 
 
