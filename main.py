@@ -1,13 +1,13 @@
 import streamlit as st
 
-# st.set_page_config MUST be the first Streamlit call.
+# Must be the first Streamlit call
 st.set_page_config(page_title="Arhat: The Path to Enlightenment", page_icon="🕉️", layout="wide")
 
 import openai
 import os
 from dotenv import load_dotenv
 
-# Load environment variables (local .env or Streamlit Cloud secrets)
+# Load environment variables (from .env locally or Streamlit Cloud secrets)
 load_dotenv()
 
 # Retrieve the API key from the environment
@@ -16,13 +16,13 @@ if not OPENAI_API_KEY:
     st.error("Please set your OPENAI_API_KEY in your environment or via Streamlit Cloud secrets.")
     st.stop()
 
-# Set the API key globally for the openai library
+# Set the API key globally
 openai.api_key = OPENAI_API_KEY
 
-# Debug: Show the OpenAI Python library version (should be 1.64.0 or later)
+# (Optional) Debug: show the OpenAI library version
 st.write("OpenAI Python library version:", openai.__version__)
 
-# Custom CSS for a serene, philosophical look
+# Custom CSS for a calm, philosophical look
 st.markdown(
     """
     <style>
@@ -36,7 +36,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# App Title and Description
+# App title and description
 st.title("Arhat: The Path to Enlightenment 🕉️")
 st.write(
     """
@@ -45,7 +45,7 @@ st.write(
     """
 )
 
-# Initialize chat history in session state
+# Initialize chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -56,7 +56,6 @@ def get_openai_response(prompt):
             model="gpt-3.5-turbo",
             messages=prompt
         )
-        # Accessing response using dictionary keys as per the new interface
         return response["choices"][0]["message"]["content"].strip()
     except Exception as e:
         return f"Error: {str(e)}"
@@ -66,22 +65,20 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# Get user input for the chatbot
+# Get user input
 user_input = st.chat_input("Share your thoughts or ask for guidance...")
 if user_input:
-    # Append the user's message to the chat history
     st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
         st.markdown(user_input)
     
-    # Prepare conversation history and get the bot's response
     messages = [{"role": msg["role"], "content": msg["content"]} for msg in st.session_state.messages]
     bot_response = get_openai_response(messages)
     
-    # Append and display the assistant's response
     st.session_state.messages.append({"role": "assistant", "content": bot_response})
     with st.chat_message("assistant"):
         st.markdown(bot_response)
+
 
 
 
