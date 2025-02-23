@@ -3,7 +3,10 @@ import streamlit as st
 import os
 from dotenv import load_dotenv
 
-# Load environment variables (this works locally; on Streamlit Cloud, secrets are set via the Secrets feature)
+# Set page configuration first, before any other Streamlit commands
+st.set_page_config(page_title="Arhat: The Path to Enlightenment", page_icon="🕉️", layout="wide")
+
+# Load environment variables from .env (or use Streamlit Cloud secrets)
 load_dotenv()
 
 # Get your API key from environment variables
@@ -12,16 +15,13 @@ if not OPENAI_API_KEY:
     st.error("Please set your OPENAI_API_KEY in your environment or via Streamlit Cloud secrets.")
     st.stop()
 
-# Set the API key globally
+# Set the API key globally for OpenAI
 openai.api_key = OPENAI_API_KEY
 
 # (Optional) Debug: display the installed OpenAI library version.
 st.write("OpenAI Python library version:", openai.__version__)
 
-# Configure Streamlit page
-st.set_page_config(page_title="Arhat: The Path to Enlightenment", page_icon="🕉️", layout="wide")
-
-# Custom CSS for a serene look
+# Custom CSS for a serene, philosophical look
 st.markdown(
     """
     <style>
@@ -42,7 +42,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# App title and description
+# App Title and Description
 st.title("Arhat: The Path to Enlightenment 🕉️")
 st.write(
     """
@@ -71,7 +71,7 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# Get user input and update chat
+# Get user input for the chatbot
 user_input = st.chat_input("Share your thoughts or ask for guidance...")
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
@@ -85,6 +85,7 @@ if user_input:
     st.session_state.messages.append({"role": "assistant", "content": bot_response})
     with st.chat_message("assistant"):
         st.markdown(bot_response)
+
 
 
 
